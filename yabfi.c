@@ -1,6 +1,5 @@
 #include <stdint.h> /* for uint8_t */
 #include <stdio.h>
-#include <stdlib.h>
 
 
 
@@ -10,6 +9,7 @@
 
 enum bf_error {
 	BF_SUCCESS,
+	BF_ERROR_INVALID_ARGS,
 	BF_ERROR_TAPE_OVERFLOW,
 	BF_ERROR_TAPE_UNDERFLOW,
 	BF_ERROR_IO,
@@ -80,7 +80,7 @@ enum bf_error run(const char *program, uint8_t *tape, const char *const *loop_op
 int main(int argc, char **argv) {
 	if (argc != 2) {
 		fprintf(stderr, "USAGE: %s BRAINFUCK_CODE\n", argv[0]);
-		return EXIT_FAILURE;
+		return BF_ERROR_INVALID_ARGS;
 	}
 	uint8_t tape[TAPE_SIZE] = {0};
 	const char *loop_opens[MAX_LOOP_DEPTH] = {0};
