@@ -8,7 +8,7 @@ EXEC := yabfi
 EXEC_DBG := yabfi_debug
 
 
-CFLAGS := -std=c89 -Wall -Wextra
+CFLAGS := -std=c99 -Wall -Wextra
 
 
 .PHONY: all debug clean
