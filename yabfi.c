@@ -9,14 +9,18 @@
 
 
 enum bf_error {
-	BF_SUCCESS,
-	BF_ERROR_INVALID_ARGS,
-	BF_ERROR_TAPE_OVERFLOW,
-	BF_ERROR_TAPE_UNDERFLOW,
-	BF_ERROR_IO,
-	BF_ERROR_NOMEM,
-	BF_ERROR_LOOP_OVERFLOW,
-	BF_ERROR_LOOP_UNDERFLOW,
+	BF_SUCCESS = 0, /* No error */
+
+	BF_ERROR_ENV          = 0x20, /* Generic code for an error unrelated to the code */
+	BF_ERROR_INVALID_ARGS = 0x21, /* Incorrect command-line arguments */
+	BF_ERROR_IO           = 0x22, /* I/O error: file not found, read/write failure */
+	BF_ERROR_NOMEM        = 0x23, /* Impossible to allocate memory */
+
+	BF_ERROR_PROGRAM        = 0x40, /* Generic code for errors in the Brainfuck source */
+	BF_ERROR_TAPE_OVERFLOW  = 0x41, /* Access to a < 0 cell on the tape */
+	BF_ERROR_TAPE_UNDERFLOW = 0x42, /* Tape pointer beyond scope (< 32,768) */
+	BF_ERROR_LOOP_OVERFLOW  = 0x43, /* Maximum loop nesting level exceeded */
+	BF_ERROR_LOOP_UNDERFLOW = 0x44, /* Unbalanced ] */
 };
 
 
