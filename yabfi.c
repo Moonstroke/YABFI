@@ -102,7 +102,16 @@ enum bf_error run(const char *program, uint8_t *tape, const char *const *loop_op
 			case ',':
 				{
 					int input = getchar();
-					tape[tape_pointer] = (uint8_t) (input == EOF ? 0 : input);
+					if(input == EOF) {
+						if(feof(stdin)) {
+							tape[tape_pointer] = 0;
+						} else {
+							// ferror(stdin) is true
+							return BF_ERROR_IO;
+						}
+					} else {
+						tape[tape_pointer] = (uint8_t) input;
+					}
 				}
 				break;
 			case '.':
