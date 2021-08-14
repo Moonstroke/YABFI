@@ -28,9 +28,9 @@ Brainfuck code to execute.
 
 It reads from `stdin`, and outputs to `stdout`; redirection from or to files
 will have to be performed through the shell.
-No output is written to `stderr`. Non-zero exit codes can be used to diagnose
-errors; these codes are defined as `enum` constants at the top of the source
-file.
+`stderr` is only written to when the command-line arguments are invalid.
+Otherwise, non-zero exit codes can be used to diagnose errors; these codes are
+defined as `enum` constants at the top of the source file.
 
 
 ### Compilation
