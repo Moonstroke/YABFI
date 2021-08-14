@@ -10,7 +10,9 @@ interpreter
 The current implementation has a low static memory footprint (it uses 64 KiB of
 memory). The counterpart is that the program's data is capped at 32 KiB (32768
 unsigned octets exactly), and the loop depth is limited to 512 levels of
-nesting.
+nesting. The pogram only uses dynamic memory to store the program if it is being
+read from a file (passing a code string on the command-line means no dynamic
+memory is allocated).
 
 Proper bound-checking is also implemented to provide a safe program, and various
 result codes are used by the executable interpreter to identify the source of
@@ -19,11 +21,16 @@ failure when the executions ends with error.
 
 ### Usage
 
-The executable accepts a single argument, a character string containing the
-Brainfuck code to execute (using command-line options to read from a file is a
-planned evolution).
+The executable accepts either a single path argument to a Brainfuck program
+file, the option `-f` with once again a path argument to a Brainfuck program
+file, or the `-x` option with as argument a character string containing the
+Brainfuck code to execute.
 
-It reads from `stdin`, and outputs to `stdout`.
+It reads from `stdin`, and outputs to `stdout`; redirection from or to files
+will have to be performed through the shell.
+No output is written to `stderr`. Non-zero exit codes can be used to diagnose
+errors; these codes are defined as `enum` constants at the top of the source
+file.
 
 
 ### Compilation
