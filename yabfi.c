@@ -150,13 +150,30 @@ int main(int argc, char **argv) {
 	} else if (rc != BF_SUCCESS) {
 		return rc;
 	}
-	uint8_t tape[TAPE_SIZE] = {0};
-	const char *loop_opens[MAX_LOOP_DEPTH] = {0};
-	const char *loop_closes[MAX_LOOP_DEPTH] = {0};
-	rc = parse(program, loop_opens, loop_closes);
+	uint8_t *tape = calloc(TAPE_SIZE, sizeof *tape);
+	const char **loop_opens = NULL;
+	const char **loop_closes = NULL;
+	if (tape == NULL) {
+		rc = BF_ERROR_NOMEM;
+	}
+	loop_opens = calloc(MAX_LOOP_DEPTH, sizeof *loop_opens);
+	if (loop_opens == NULL) {
+		rc = BF_ERROR_NOMEM;
+	}
+	loop_closes = calloc(MAX_LOOP_DEPTH, sizeof *loop_closes);
+	if (loop_closes == NULL) {
+		rc = BF_ERROR_NOMEM;
+	}
+	if (rc == BF_SUCCESS) {
+		rc = parse(program, loop_opens, loop_closes);
+	}
 	if (rc == BF_SUCCESS) {
 		rc = run(program, tape, loop_opens, loop_closes);
 	}
+
+	free(loop_closes);
+	free(loop_opens);
+	free(tape);
 	if(needs_free) {
 		free(program);
 	}
