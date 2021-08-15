@@ -7,12 +7,13 @@ interpreter
 
 ### Presentation
 
-The current implementation has a low static memory footprint (it uses 64 KiB of
-memory). The counterpart is that the program's data is capped at 32 KiB (32768
-unsigned octets exactly), and the loop depth is limited to 512 levels of
-nesting. The pogram only uses dynamic memory to store the program if it is being
+The current implementation has a low memory footprint: it uses 48 KiB of
+dynamically-allocated memory and a negligible amount of static memory. The
+counterpart is that the program's data is capped at 32 KiB (32768 unsigned
+octets exactly), and the loop depth is limited to 512 levels of nesting. The
+Brainfuck source is copied in additional dynamic memory only if it is being
 read from a file (passing a code string on the command-line means no dynamic
-memory is allocated).
+memory is allocated for it).
 
 Proper bound-checking is also implemented to provide a safe program, and various
 result codes are used by the executable interpreter to identify the source of
