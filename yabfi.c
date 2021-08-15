@@ -94,7 +94,7 @@ enum bf_error parse(const char *program, const char **loop_opens,
 enum bf_error run(const char *program, uint8_t *tape,
                   const char *const *loop_opens,
                   const char *const *loop_closes) {
-	size_t tape_pointer = 0;
+	size_t tape_pointer = 0; /* Change to 16384 for a symmetrical tape */
 	size_t loop_depth = 0;
 	for (; *program; ++program) {
 		switch (*program) {
