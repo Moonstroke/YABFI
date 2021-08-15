@@ -79,6 +79,7 @@ enum bf_error read_program(int argc, char *const *argv, char **program,
 
 enum bf_error parse(const char *program, const char **loop_bounds,
                     ptrdiff_t *loop_wrap_diffs) {
+	const char *const program_backup = program;
 	size_t index = 0;
 	for (; *program; ++program) {
 		if (*program == '[') {
@@ -105,7 +106,9 @@ enum bf_error parse(const char *program, const char **loop_bounds,
 					--loop_depth;
 				} else if (program[diff] == ']') {
 					++loop_depth;
-				} // TODO handle underflow
+				} else if (diff == program_backup - program) {
+					return BF_ERROR_LOOP_UNDERFLOW;
+				}
 				--diff;
 			}
 			loop_wrap_diffs[index++] = diff + 1;
