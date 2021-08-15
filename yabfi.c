@@ -99,11 +99,16 @@ enum bf_error run(const char *program, uint8_t *tape,
 	for (; *program; ++program) {
 		switch (*program) {
 			case '>':
-				if (++tape_pointer == TAPE_SIZE)
+				if (++tape_pointer == TAPE_SIZE) {
+					/* Wrap back to 0 for a circular tape */
 					return BF_ERROR_TAPE_OVERFLOW;
+				}
 				break;
 			case '<':
-				if (tape_pointer-- == 0) return BF_ERROR_TAPE_UNDERFLOW;
+				if (tape_pointer-- == 0) {
+					/* Wrap to TAPE_SIZE - 1 for a circular tape */
+					return BF_ERROR_TAPE_UNDERFLOW;
+				}
 				break;
 			case '+':
 				tape[tape_pointer]++;
