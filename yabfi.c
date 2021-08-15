@@ -78,14 +78,20 @@ enum bf_error read_program(int argc, char *const *argv, char **program,
 
 enum bf_error parse(const char *program, const char **loop_opens,
                     const char **loop_closes) {
-	size_t depth = 0;
+	size_t last_added = 0;
+	size_t open_loops_index = 0;
 	for (; *program; ++program) {
 		if (*program == '[') {
-			loop_opens[depth++] = program;
-			if (depth == MAX_LOOP_DEPTH) return BF_ERROR_LOOP_OVERFLOW;
+			loop_opens[open_loops_index] = program;
+			last_added = open_loops_index;
+			++open_loops_index;
 		} else if (*program == ']') {
-			if (depth == 0) return BF_ERROR_LOOP_UNDERFLOW;
-			loop_closes[--depth] = program;
+			size_t current_close_loop_index = last_added;
+			while (loop_closes[current_close_loop_index] != NULL) {
+				--current_close_loop_index;
+			}
+			loop_closes[current_close_loop_index] = program;
+			last_added = current_close_loop_index;
 		}
 	}
 	return BF_SUCCESS;
