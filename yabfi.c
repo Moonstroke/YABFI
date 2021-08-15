@@ -23,8 +23,7 @@ enum bf_error {
 	                                   source */
 	BF_ERROR_TAPE_OVERFLOW  = 0x41, /* Access to a < 0 cell on the tape */
 	BF_ERROR_TAPE_UNDERFLOW = 0x42, /* Tape pointer beyond scope (< 32,768) */
-	BF_ERROR_LOOP_OVERFLOW  = 0x43, /* Maximum loop nesting level exceeded */
-	BF_ERROR_LOOP_UNDERFLOW = 0x44, /* Unbalanced ] */
+	BF_ERROR_LOOP_UNMATCHED = 0x43, /* Unbalanced [ or ] loop bound */
 };
 
 
@@ -82,34 +81,30 @@ enum bf_error parse(const char *program, const char **loop_bounds,
 	const char *const program_backup = program;
 	size_t index = 0;
 	for (; *program; ++program) {
+		ptrdiff_t diff;
+		unsigned int loop_depth;
 		if (*program == '[') {
 			loop_bounds[index] = program;
-			ptrdiff_t diff = 1;
-			unsigned int loop_depth = 1;
-			while (loop_depth > 0) {
+			for (diff = 1, loop_depth = 1; loop_depth > 0; ++diff) {
 				if (program[diff] == '[') {
 					++loop_depth;
 				} else if (program[diff] == ']') {
 					--loop_depth;
 				} else if (program[diff] == '\0') {
-					return BF_ERROR_LOOP_OVERFLOW;
+					return BF_ERROR_LOOP_UNMATCHED;
 				}
-				++diff;
 			}
 			loop_wrap_diffs[index++] = diff - 1;
 		} else if (*program == ']') {
 			loop_bounds[index] = program;
-			ptrdiff_t diff = -1;
-			unsigned int loop_depth = 1;
-			while (loop_depth > 0) {
+			for (diff = -1, loop_depth = 1; loop_depth > 0; --diff) {
 				if (program[diff] == '[') {
 					--loop_depth;
 				} else if (program[diff] == ']') {
 					++loop_depth;
 				} else if (diff == program_backup - program) {
-					return BF_ERROR_LOOP_UNDERFLOW;
+					return BF_ERROR_LOOP_UNMATCHED;
 				}
-				--diff;
 			}
 			loop_wrap_diffs[index++] = diff + 1;
 		}
