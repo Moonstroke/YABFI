@@ -1,3 +1,4 @@
+#include <stddef.h> /* for ptrdiff_t, size_t */
 #include <stdint.h> /* for uint8_t */
 #include <stdio.h>
 #include <stdlib.h>
@@ -76,32 +77,57 @@ enum bf_error read_program(int argc, char *const *argv, char **program,
 	return BF_SUCCESS;
 }
 
-enum bf_error parse(const char *program, const char **loop_opens,
-                    const char **loop_closes) {
-	size_t last_added = 0;
-	size_t open_loops_index = 0;
+enum bf_error parse(const char *program, const char **loop_bounds,
+                    ptrdiff_t *loop_wrap_diffs) {
+	size_t index = 0;
 	for (; *program; ++program) {
 		if (*program == '[') {
-			loop_opens[open_loops_index] = program;
-			last_added = open_loops_index;
-			++open_loops_index;
-		} else if (*program == ']') {
-			size_t current_close_loop_index = last_added;
-			while (loop_closes[current_close_loop_index] != NULL) {
-				--current_close_loop_index;
+			loop_bounds[index] = program;
+			ptrdiff_t diff = 1;
+			unsigned int loop_depth = 1;
+			while (loop_depth > 0) {
+				if (program[diff] == '[') {
+					++loop_depth;
+				} else if (program[diff] == ']') {
+					--loop_depth;
+				} else if (program[diff] == '\0') {
+					return BF_ERROR_LOOP_OVERFLOW;
+				}
+				++diff;
 			}
-			loop_closes[current_close_loop_index] = program;
-			last_added = current_close_loop_index;
+			loop_wrap_diffs[index++] = diff - 1;
+		} else if (*program == ']') {
+			loop_bounds[index] = program;
+			ptrdiff_t diff = -1;
+			unsigned int loop_depth = 1;
+			while (loop_depth > 0) {
+				if (program[diff] == '[') {
+					--loop_depth;
+				} else if (program[diff] == ']') {
+					++loop_depth;
+				} // TODO handle underflow
+				--diff;
+			}
+			loop_wrap_diffs[index++] = diff + 1;
 		}
 	}
 	return BF_SUCCESS;
 }
 
+size_t indexof(const char *const *ptrs, const char *ptr) {
+	size_t i = 0;
+	/* No bounds checks needed because we know, since function parse, that the
+	   value is present */
+	while (ptrs[i] != ptr) {
+		++i;
+	}
+	return i;
+}
+
 enum bf_error run(const char *program, uint8_t *tape,
-                  const char *const *loop_opens,
-                  const char *const *loop_closes) {
+                  const char *const *loop_bounds,
+                  const ptrdiff_t *loop_wrap_diffs) {
 	size_t tape_pointer = 0; /* Change to 16384 for a symmetrical tape */
-	size_t loop_depth = 0;
 	for (; *program; ++program) {
 		switch (*program) {
 			case '>':
@@ -142,16 +168,12 @@ enum bf_error run(const char *program, uint8_t *tape,
 				break;
 			case '[':
 				if (tape[tape_pointer] == 0) {
-					program = loop_closes[loop_depth];
-				} else {
-					++loop_depth;
+					program += loop_wrap_diffs[indexof(loop_bounds, program)];
 				}
 				break;
 			case ']':
-				if (tape[tape_pointer] == 0) {
-					--loop_depth;
-				} else {
-					program = loop_opens[loop_depth - 1];
+				if (tape[tape_pointer] != 0) {
+					program += loop_wrap_diffs[indexof(loop_bounds, program)];
 				}
 				break;
 		}
@@ -171,28 +193,28 @@ int main(int argc, char **argv) {
 		return rc;
 	}
 	uint8_t *tape = calloc(TAPE_SIZE, sizeof *tape);
-	const char **loop_opens = NULL;
-	const char **loop_closes = NULL;
+	const char **loop_bounds = NULL;
+	ptrdiff_t *loop_wrap_diffs = NULL;
 	if (tape == NULL) {
 		rc = BF_ERROR_NOMEM;
 	}
-	loop_opens = calloc(MAX_LOOP_DEPTH, sizeof *loop_opens);
-	if (loop_opens == NULL) {
+	loop_bounds = calloc(MAX_LOOP_DEPTH, sizeof *loop_bounds);
+	if (loop_bounds == NULL) {
 		rc = BF_ERROR_NOMEM;
 	}
-	loop_closes = calloc(MAX_LOOP_DEPTH, sizeof *loop_closes);
-	if (loop_closes == NULL) {
+	loop_wrap_diffs = calloc(MAX_LOOP_DEPTH, sizeof *loop_wrap_diffs);
+	if (loop_wrap_diffs == NULL) {
 		rc = BF_ERROR_NOMEM;
 	}
 	if (rc == BF_SUCCESS) {
-		rc = parse(program, loop_opens, loop_closes);
+		rc = parse(program, loop_bounds, loop_wrap_diffs);
 	}
 	if (rc == BF_SUCCESS) {
-		rc = run(program, tape, loop_opens, loop_closes);
+		rc = run(program, tape, loop_bounds, loop_wrap_diffs);
 	}
 
-	free(loop_closes);
-	free(loop_opens);
+	free(loop_wrap_diffs);
+	free(loop_bounds);
 	free(tape);
 	if (needs_free) {
 		free(program);
