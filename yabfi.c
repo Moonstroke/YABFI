@@ -2,6 +2,7 @@
 #include <stdint.h> /* for uint8_t */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h> /* for strcmp */
 
 
 
@@ -11,6 +12,7 @@
 
 enum bf_error {
 	BF_SUCCESS = 0, /* No error */
+	BF_USAGE   = 1, /* Not an error. Print usage and quit */
 
 	BF_ERROR_ENV          = 0x20, /* Generic code for an error unrelated to the
 	                                 code */
@@ -31,6 +33,9 @@ enum bf_error read_program(int argc, char *const *argv, char **program,
                            int *needs_free) {
 	const char *src_file = NULL;
 	if (argc == 2) {
+		if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
+			return BF_USAGE;
+		}
 		src_file = argv[1];
 	} else if (argc == 3) {
 		if (argv[1][0] == '-') {
@@ -183,10 +188,11 @@ int main(int argc, char **argv) {
 	char *program;
 	int needs_free;
 	int rc = read_program(argc, argv, &program, &needs_free);
-	if (rc == BF_ERROR_INVALID_ARGS) {
+	if (rc == BF_ERROR_INVALID_ARGS || rc == BF_USAGE) {
 		fprintf(stderr, "USAGE: %s [-f] BRAINFUCK_FILE | -x BRAINFUCK_CODE\n",
 		        argv[0]);
-		return BF_ERROR_INVALID_ARGS;
+		/* BF_USAGE does not mean failure, exit with success code */
+		return rc == BF_USAGE ? BF_SUCCESS : BF_ERROR_INVALID_ARGS;
 	} else if (rc != BF_SUCCESS) {
 		return rc;
 	}
