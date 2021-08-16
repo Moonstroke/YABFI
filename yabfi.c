@@ -10,7 +10,7 @@
 #define MAX_LOOP_DEPTH 512
 
 
-enum bf_error {
+enum bf_rescode {
 	BF_SUCCESS = 0, /* No error */
 	BF_USAGE   = 1, /* Not an error. Print usage and quit */
 
@@ -29,7 +29,7 @@ enum bf_error {
 };
 
 
-enum bf_error read_program(int argc, char *const *argv, char **program,
+enum bf_rescode parse_args(int argc, char *const *argv, char **program,
                            int *needs_free) {
 	const char *src_file = NULL;
 	if (argc == 2) {
@@ -81,8 +81,8 @@ enum bf_error read_program(int argc, char *const *argv, char **program,
 	return BF_SUCCESS;
 }
 
-enum bf_error parse(const char *program, const char **loop_bounds,
-                    ptrdiff_t *loop_wrap_diffs) {
+enum bf_rescode parse_source(const char *program, const char **loop_bounds,
+                             ptrdiff_t *loop_wrap_diffs) {
 	const char *const program_backup = program;
 	size_t index = 0;
 	for (; *program; ++program) {
@@ -127,9 +127,9 @@ size_t indexof(const char *const *ptrs, const char *ptr) {
 	return i;
 }
 
-enum bf_error run(const char *program, uint8_t *tape,
-                  const char *const *loop_bounds,
-                  const ptrdiff_t *loop_wrap_diffs) {
+enum bf_rescode run(const char *program, uint8_t *tape,
+                    const char *const *loop_bounds,
+                    const ptrdiff_t *loop_wrap_diffs) {
 	size_t tape_pointer = 0; /* Change to 16384 for a symmetrical tape */
 	for (; *program; ++program) {
 		switch (*program) {
@@ -187,7 +187,7 @@ enum bf_error run(const char *program, uint8_t *tape,
 int main(int argc, char **argv) {
 	char *program;
 	int needs_free;
-	int rc = read_program(argc, argv, &program, &needs_free);
+	int rc = parse_args(argc, argv, &program, &needs_free);
 	if (rc == BF_ERROR_INVALID_ARGS || rc == BF_USAGE) {
 		fprintf(stderr, "USAGE: %s [-f] BRAINFUCK_FILE | -x BRAINFUCK_CODE\n",
 		        argv[0]);
@@ -211,7 +211,7 @@ int main(int argc, char **argv) {
 		rc = BF_ERROR_NOMEM;
 	}
 	if (rc == BF_SUCCESS) {
-		rc = parse(program, loop_bounds, loop_wrap_diffs);
+		rc = parse_source(program, loop_bounds, loop_wrap_diffs);
 	}
 	if (rc == BF_SUCCESS) {
 		rc = run(program, tape, loop_bounds, loop_wrap_diffs);
