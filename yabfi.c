@@ -1,3 +1,5 @@
+#include <errno.h> /* for errno, EISDIR */
+#include <limits.h> /* for LONG_MAX */
 #include <stddef.h> /* for ptrdiff_t, size_t */
 #include <stdint.h> /* for uint8_t */
 #include <stdio.h>
@@ -57,21 +59,32 @@ enum bf_rescode parse_args(int argc, char *const *argv, char **program,
 	/* File path given in src_file. Read from the file into *program */
 	FILE *file = fopen(src_file, "r");
 	if (file == NULL) {
+		perror(src_file);
 		return BF_ERROR_IO;
 	}
-	long length;
+	long length = 0;
 	if (fseek(file, 0, SEEK_END) < 0
-	    || (length = ftell(file)) < 0
+	    || (length = ftell(file)) < 0 || length == LONG_MAX
 	    || fseek(file, 0, SEEK_SET) < 0) {
+		if (length == LONG_MAX) {
+			/* On my Debian 9.13 with libc6 v2.24 and Linux 4.9.0 fopening a
+			   directory works, but ftelling it afterwards returns LONG_MAX. We
+			   assume it is the same case here and change the error to the
+			   appropriate flag so that perror outputs the intended message */
+			errno = EISDIR;
+		}
+		perror(src_file);
 		fclose(file);
 		return BF_ERROR_IO;
 	}
 	*program = malloc(length);
 	if (*program == NULL) {
+		perror(NULL);
 		fclose(file);
 		return BF_ERROR_NOMEM;
 	}
 	if (fread(*program, 1, length, file) < (unsigned long) length) {
+		perror(src_file);
 		free(*program);
 		fclose(file);
 		return BF_ERROR_IO;
@@ -158,6 +171,7 @@ enum bf_rescode run(const char *program, uint8_t *tape,
 						if(feof(stdin)) {
 							tape[tape_pointer] = 0;
 						} else {
+							perror(NULL);
 							/* here ferror(stdin) is true */
 							return BF_ERROR_IO;
 						}
@@ -167,7 +181,10 @@ enum bf_rescode run(const char *program, uint8_t *tape,
 				}
 				break;
 			case '.':
-				if (putchar(tape[tape_pointer]) == EOF) return BF_ERROR_IO;
+				if (putchar(tape[tape_pointer]) == EOF) {
+					perror(NULL);
+					return BF_ERROR_IO;
+				}
 				break;
 			case '[':
 				if (tape[tape_pointer] == 0) {
@@ -200,14 +217,17 @@ int main(int argc, char **argv) {
 	const char **loop_bounds = NULL;
 	ptrdiff_t *loop_wrap_diffs = NULL;
 	if (tape == NULL) {
+		perror(NULL);
 		rc = BF_ERROR_NOMEM;
 	}
 	loop_bounds = calloc(MAX_LOOP_DEPTH, sizeof *loop_bounds);
 	if (loop_bounds == NULL) {
+		perror(NULL);
 		rc = BF_ERROR_NOMEM;
 	}
 	loop_wrap_diffs = calloc(MAX_LOOP_DEPTH, sizeof *loop_wrap_diffs);
 	if (loop_wrap_diffs == NULL) {
+		perror(NULL);
 		rc = BF_ERROR_NOMEM;
 	}
 	if (rc == BF_SUCCESS) {
