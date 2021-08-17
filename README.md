@@ -1,8 +1,7 @@
 # YABFI
 ## Yet Another BrainFuck Interpreter
 
-Standard C99 compatible [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck)
-interpreter
+Standard C99 compatible [Brainfuck] interpreter
 
 
 ### Presentation
@@ -29,14 +28,27 @@ Brainfuck code to execute.
 
 It reads from `stdin`, and outputs to `stdout`; redirection from or to files
 will have to be performed through the shell.
-`stderr` is only written to when the command-line arguments are invalid.
+`stderr` is only written to when an error occurs; the errors here correspond to
+calls to standard library functions failing. The source (if available) and
+reason of the failure are output to `stderr`.
+
 Otherwise, non-zero exit codes can be used to diagnose errors; these codes are
 defined as `enum` constants at the top of the source file.
 
 
 ### Compilation
 
-Just run `make` to compile, or use your own compiler.
+Compilation using compilers accepting GNU-style options, namely [gcc], [clang],
+[tcc], etc. is facilitated thorough the use of [GNU Make]; if you have it
+installed, just run `make` to compile.
+The Makefile also provides the rules `debug`, to build a debuggable executable,
+and `clean` to remove the compiled files (objects and executable).
 
-Other Make rules provided are `debug`, to build a debuggable executable, and
-`clean` to remove the compiled files (objects and executable).
+If you don't have (or don't want to use) Make, you can easily use your own
+compiler as the source is only a single file.
+
+[Brainfuck]:https://en.wikipedia.org/wiki/Brainfuck
+[gcc]:https://gcc.gnu.org/
+[tcc]:https://bellard.org/tcc/
+[clang]:https://clang.llvm.org/
+[GNU Make]:https://www.gnu.org/software/make/
